@@ -276,8 +276,9 @@ function toggleStockStatus(id) {
    WHATSAPP REDIRECT
 ========================= */
 function redirectToWhatsApp(nama, harga) {
-    const adminContact = localStorage.getItem('adminContact') || '6287743601940';
+    const adminContact = localStorage.getItem('adminContact') || '6281374770065';
     const message = `Halo Admin, saya ingin memesan produk ${nama} dengan harga Rp${harga}`;
     window.open(`https://wa.me/${adminContact}?text=${encodeURIComponent(message)}`);
 }
+
 
