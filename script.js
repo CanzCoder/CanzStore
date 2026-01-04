@@ -1,9 +1,36 @@
 let currentCategory = 'all'; // Global variable to keep track of the active category
 
-document.addEventListener("DOMContentLoaded", () => {
+/* =========================
+   ANNOUNCEMENT DISPLAY
+========================= */
+async function loadAndDisplayAnnouncement() {
+    try {
+        const response = await fetch('http://localhost:3000/api/announcement');
+        const data = await response.json();
+        const announcementBanner = document.getElementById('announcement-banner');
+        if (announcementBanner && data.text) {
+            announcementBanner.textContent = data.text;
+            announcementBanner.style.display = 'block';
+        } else if (announcementBanner) {
+            announcementBanner.style.display = 'none';
+        }
+
+        const announcementTextInput = document.getElementById('announcement-text');
+        if (announcementTextInput) {
+            announcementTextInput.value = data.text || '';
+        }
+    } catch (error) {
+        console.error("Error loading announcement:", error);
+        const announcementBanner = document.getElementById('announcement-banner');
+        if (announcementBanner) announcementBanner.style.display = 'none';
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
     initDefaultAdmin();
     checkUserRole();
-    loadProducts(); // This will now call filterAndRenderProducts internally
+    await loadProducts(); // This will now call filterAndRenderProducts internally
+    await loadAndDisplayAnnouncement(); // Load announcement on page load
 
     const logoutButton = document.getElementById('logout-button');
     if(logoutButton) {
@@ -23,14 +50,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const saveAnnouncementButton = document.getElementById('save-announcement-button');
     if(saveAnnouncementButton) {
-        saveAnnouncementButton.addEventListener('click', () => {
+        saveAnnouncementButton.addEventListener('click', async () => {
             const announcementText = document.getElementById('announcement-text').value.trim();
-            if (announcementText) {
-                localStorage.setItem('announcement', announcementText);
-                alert('Pengumuman berhasil disimpan!');
-            } else {
-                localStorage.removeItem('announcement');
-                alert('Pengumuman berhasil dihapus.');
+            try {
+                const response = await fetch('http://localhost:3000/api/announcement', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: announcementText })
+                });
+
+                if (response.ok) {
+                    if (announcementText) {
+                        alert('Pengumuman berhasil disimpan!');
+                    } else {
+                        alert('Pengumuman berhasil dihapus.');
+                    }
+                    // Optionally, update the displayed announcement on the page
+                    // This assumes there's a function to load announcement
+                    // loadAnnouncementDisplay();
+                } else {
+                    alert('Gagal menyimpan pengumuman.');
+                }
+            } catch (error) {
+                console.error("Error saving announcement:", error);
+                alert('Terjadi kesalahan saat menyimpan pengumuman.');
             }
         });
     }
@@ -58,17 +103,33 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =========================
    DEFAULT ADMIN (ONCE)
 ========================= */
-function initDefaultAdmin() {
-    if (!localStorage.getItem('users')) {
-        const users = [
-            {
+async function initDefaultAdmin() {
+    try {
+        const response = await fetch('http://localhost:3000/api/users');
+        const users = await response.json();
+
+        if (users.length === 0) {
+            const defaultAdmin = {
                 username: "canda",
                 password: "pracanda231",
-                role: "admin"
+                role: "admin",
+                email: "admin@example.com" // Email is now required by register API
+            };
+            const registerResponse = await fetch('http://localhost:3000/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(defaultAdmin)
+            });
+            if (registerResponse.ok) {
+                console.log("Default admin dibuat di backend");
+            } else {
+                console.error("Gagal membuat default admin di backend");
             }
-        ];
-        localStorage.setItem('users', JSON.stringify(users));
-        console.log("Default admin dibuat");
+        }
+    } catch (error) {
+        console.error("Error checking/creating default admin:", error);
     }
 }
 
@@ -109,54 +170,67 @@ function checkUserRole() {
 /* =========================
    LOGIN
 ========================= */
-document.getElementById('login-form')?.addEventListener('submit', function (e) {
+document.getElementById('login-form')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const username = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value.trim();
 
-    const users = JSON.parse(localStorage.getItem('users')) || [];
+    try {
+        const response = await fetch('http://localhost:3000/api/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
 
-    const user = users.find(
-        u => u.username === username && u.password === password
-    );
+        const data = await response.json();
 
-    if (user) {
-        localStorage.setItem('loggedInUser', JSON.stringify(user));
-        alert("Login berhasil!");
-        window.location.href = "index.html";
-    } else {
-        alert("Username atau password salah!");
+        if (response.ok) {
+            localStorage.setItem('loggedInUser', JSON.stringify(data.user)); // Store user info from backend
+            alert("Login berhasil!");
+            window.location.href = "index.html";
+        } else {
+            alert(data.message || "Username atau password salah!");
+        }
+    } catch (error) {
+        console.error("Error during login:", error);
+        alert("Terjadi kesalahan saat login.");
     }
 });
 
 /* =========================
    REGISTER
 ========================= */
-document.getElementById('register-form')?.addEventListener('submit', function (e) {
+document.getElementById('register-form')?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const username = document.getElementById('reg-username').value.trim().toLowerCase();
     const email = document.getElementById('reg-email').value.trim();
     const password = document.getElementById('reg-password').value.trim();
 
-    let users = JSON.parse(localStorage.getItem('users')) || [];
+    try {
+        const response = await fetch('http://localhost:3000/api/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, email, password })
+        });
 
-    if (users.some(u => u.username === username)) {
-        alert("Username sudah digunakan!");
-        return;
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("Registrasi berhasil, silakan login");
+            window.location.href = "login.html";
+        } else {
+            alert(data.message || "Registrasi gagal.");
+        }
+    } catch (error) {
+        console.error("Error during registration:", error);
+        alert("Terjadi kesalahan saat registrasi.");
     }
-
-    users.push({
-        username,
-        email,
-        password,
-        role: "user"
-    });
-
-    localStorage.setItem('users', JSON.stringify(users));
-    alert("Registrasi berhasil, silakan login");
-    window.location.href = "login.html";
 });
 
 /* =========================
@@ -201,9 +275,12 @@ function renderProducts(productsToRender) {
 /* =========================
    FILTER AND RENDER PRODUCTS (Centralized)
 ========================= */
-function filterAndRenderProducts() {
+async function filterAndRenderProducts() {
     const searchTerm = document.getElementById('search')?.value.toLowerCase() || '';
-    let allProducts = JSON.parse(localStorage.getItem('products')) || [];
+    
+    // Fetch products from the backend API
+    const response = await fetch('http://localhost:3000/api/products');
+    let allProducts = await response.json();
 
     // Filter by category
     if (currentCategory !== 'all') {
@@ -223,35 +300,46 @@ function filterAndRenderProducts() {
 /* =========================
    LOAD PRODUCTS (Initial Admin Display)
 ========================= */
-function loadProducts() {
-    const products = JSON.parse(localStorage.getItem('products')) || [];
+async function loadProducts() {
+    let products = [];
+    try {
+        const response = await fetch('http://localhost:3000/api/products');
+        products = await response.json();
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        // Optionally display an error message to the user
+    }
     
     // For admin.html
     const adminProductList = document.getElementById('admin-product-list');
     if (adminProductList) {
         adminProductList.innerHTML = '';
-        products.forEach(product => {
-            let isInStock = false;
-            if (typeof product.stok === 'number') {
-                isInStock = product.stok > 0;
-            } else if (typeof product.stok === 'string') {
-                const lowerCaseStock = product.stok.toLowerCase();
-                isInStock = !(lowerCaseStock === 'habis' || lowerCaseStock === 'out of stock' || lowerCaseStock === '0');
-            }
+        if (products.length === 0) {
+            adminProductList.innerHTML = '<p style="text-align: center; width: 100%;">Belum ada produk.</p>';
+        } else {
+            products.forEach(product => {
+                let isInStock = false;
+                if (typeof product.stok === 'number') {
+                    isInStock = product.stok > 0;
+                } else if (typeof product.stok === 'string') {
+                    const lowerCaseStock = product.stok.toLowerCase();
+                    isInStock = !(lowerCaseStock === 'habis' || lowerCaseStock === 'out of stock' || lowerCaseStock === '0');
+                }
 
-            adminProductList.innerHTML += `
-                <div class="product-card">
-                    <h3>${product.nama}</h3>
-                    <p>Kategori: ${product.kategori || 'Tidak ada'}</p>
-                    <p>Harga: Rp${product.harga}</p>
-                    <p>Stok: ${product.stok}</p>
-                    <button onclick="deleteProduct(${product.id})">Hapus</button>
-                    <button onclick="toggleStockStatus(${product.id})">
-                        ${isInStock ? 'Set Stok Habis' : 'Set Stok Tersedia'}
-                    </button>
-                </div>
-            `;
-        });
+                adminProductList.innerHTML += `
+                    <div class="product-card">
+                        <h3>${product.nama}</h3>
+                        <p>Kategori: ${product.kategori || 'Tidak ada'}</p>
+                        <p>Harga: Rp${product.harga}</p>
+                        <p>Stok: ${product.stok}</p>
+                        <button onclick="deleteProduct(${product.id})">Hapus</button>
+                        <button onclick="toggleStockStatus(${product.id})">
+                            ${isInStock ? 'Set Stok Habis' : 'Set Stok Tersedia'}
+                        </button>
+                    </div>
+                `;
+            });
+        }
     }
 
     // Initial render for index.html via centralized function
@@ -261,7 +349,7 @@ function loadProducts() {
 /* =========================
    ADD PRODUCT (ADMIN)
 ========================= */
-document.getElementById('add-product-button')?.addEventListener('click', () => {
+document.getElementById('add-product-button')?.addEventListener('click', async () => {
     const name = document.getElementById('product-name').value;
     const imageInput = document.getElementById('product-image');
     const price = document.getElementById('product-price').value;
@@ -277,13 +365,10 @@ document.getElementById('add-product-button')?.addEventListener('click', () => {
     const imageFile = imageInput.files[0];
     const reader = new FileReader();
 
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         const imageDataUrl = e.target.result;
 
-        const products = JSON.parse(localStorage.getItem('products')) || [];
-
         const newProduct = {
-            id: Date.now(),
             nama: name,
             gambar: imageDataUrl,
             harga: price,
@@ -292,17 +377,32 @@ document.getElementById('add-product-button')?.addEventListener('click', () => {
             stok: stock
         };
 
-        products.push(newProduct);
-        localStorage.setItem('products', JSON.stringify(products));
-        loadProducts();
+        try {
+            const response = await fetch('http://localhost:3000/api/products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newProduct)
+            });
 
-        // Clear input fields after adding product
-        document.getElementById('product-name').value = '';
-        imageInput.value = ''; // Clear file input
-        document.getElementById('product-price').value = '';
-        document.getElementById('product-description').value = '';
-        document.getElementById('product-category').value = '';
-        document.getElementById('product-stock').value = '';
+            if (response.ok) {
+                alert('Produk berhasil ditambahkan!');
+                loadProducts(); // Refresh product list
+                // Clear input fields after adding product
+                document.getElementById('product-name').value = '';
+                imageInput.value = ''; // Clear file input
+                document.getElementById('product-price').value = '';
+                document.getElementById('product-description').value = '';
+                document.getElementById('product-category').value = '';
+                document.getElementById('product-stock').value = '';
+            } else {
+                alert('Gagal menambahkan produk.');
+            }
+        } catch (error) {
+            console.error('Error adding product:', error);
+            alert('Terjadi kesalahan saat menambahkan produk.');
+        }
     };
 
     reader.readAsDataURL(imageFile);
@@ -311,23 +411,45 @@ document.getElementById('add-product-button')?.addEventListener('click', () => {
 /* =========================
    DELETE PRODUCT
 ========================= */
-function deleteProduct(id) {
-    let products = JSON.parse(localStorage.getItem('products')) || [];
-    products = products.filter(p => p.id !== id);
-    localStorage.setItem('products', JSON.stringify(products));
-    loadProducts();
+async function deleteProduct(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
+        return;
+    }
+    try {
+        const response = await fetch(`http://localhost:3000/api/products/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            alert('Produk berhasil dihapus!');
+            loadProducts(); // Refresh product list
+        } else {
+            alert('Gagal menghapus produk.');
+        }
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Terjadi kesalahan saat menghapus produk.');
+    }
 }
 
 /* =========================
    TOGGLE STOCK STATUS
 ========================= */
-function toggleStockStatus(id) {
-    let products = JSON.parse(localStorage.getItem('products')) || [];
+async function toggleStockStatus(id) {
+    let products = [];
+    try {
+        const response = await fetch('http://localhost:3000/api/products');
+        products = await response.json();
+    } catch (error) {
+        console.error("Error fetching products for stock toggle:", error);
+        alert("Gagal mengambil produk untuk memperbarui stok.");
+        return;
+    }
+
     const productIndex = products.findIndex(p => p.id === id);
 
     if (productIndex > -1) {
         const currentStock = products[productIndex].stok;
-        // Check if current stock indicates "in stock" (numeric > 0, or non-"habis" string)
         let isInStock = false;
         if (typeof currentStock === 'number') {
             isInStock = currentStock > 0;
@@ -336,9 +458,29 @@ function toggleStockStatus(id) {
             isInStock = !(lowerCaseStock === 'habis' || lowerCaseStock === 'out of stock' || lowerCaseStock === '0');
         }
 
-        products[productIndex].stok = isInStock ? "habis" : 1;
-        localStorage.setItem('products', JSON.stringify(products));
-        loadProducts();
+        const newStockValue = isInStock ? "habis" : 1;
+
+        try {
+            const response = await fetch(`http://localhost:3000/api/products/${id}/stock`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ stok: newStockValue })
+            });
+
+            if (response.ok) {
+                alert('Status stok berhasil diperbarui!');
+                loadProducts(); // Refresh product list
+            } else {
+                alert('Gagal memperbarui status stok.');
+            }
+        } catch (error) {
+            console.error('Error updating stock status:', error);
+            alert('Terjadi kesalahan saat memperbarui status stok.');
+        }
+    } else {
+        alert("Produk tidak ditemukan.");
     }
 }
 

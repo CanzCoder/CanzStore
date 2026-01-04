@@ -1,0 +1,46 @@
+type User @table {
+  displayName: String!
+  email: String!
+  createdAt: Timestamp!
+  photoUrl: String
+  userType: String
+}
+
+type Store @table {
+  name: String!
+  address: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  createdAt: Timestamp!
+  description: String
+  phoneNumber: String
+  website: String
+  logoUrl: String
+  owner: User
+}
+
+type Category @table {
+  name: String!
+  createdAt: Timestamp!
+  description: String
+  imageUrl: String
+}
+
+type Product @table {
+  name: String!
+  price: Float!
+  createdAt: Timestamp!
+  description: String
+  imageUrl: String
+  sku: String
+  inStock: Boolean
+  store: Store
+  category: Category
+}
+
+type WishlistItem @table {
+  createdAt: Timestamp!
+  shopper: User
+  product: Product
+}

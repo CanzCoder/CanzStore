@@ -1,0 +1,29 @@
+mutation AddNewWishlistItem($productId: UUID!, $shopperId: UUID!) @auth(level: USER) {
+  wishlistItem_insert(data: { productId: $productId, shopperId: $shopperId, createdAt_expr: "request.time" })
+}
+
+query ListProductsByCategory($categoryId: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  products(where: { categoryId: { eq: $categoryId } }) {
+    id
+    name
+    description
+    price
+    imageUrl
+  }
+}
+
+mutation UpdateProductPrice($id: UUID!, $price: Float!) @auth(level: USER) {
+  product_update(id: $id, data: { price: $price })
+}
+
+query GetStoreById($id: UUID!) @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  store(id: $id) {
+    id
+    name
+    address
+    city
+    state
+    zipCode
+    phoneNumber
+  }
+}

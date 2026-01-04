@@ -1,0 +1,17 @@
+{
+  "name": "canzstore-backend",
+  "version": "1.0.0",
+  "description": "Backend for CanzStore product catalog",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "firebase-admin": "^12.0.0"
+  }
+}
