@@ -17,50 +17,94 @@ body {
 header {
     background: #212121;
     color: white;
-    padding: 25px 20px;
-    text-align: center;
-    border-bottom: 3px solid #e53935;
     position: sticky;
     top: 0;
     z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
     transition: background-color 0.3s ease;
 }
 
-header h1 {
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #333;
+}
+
+.store-title {
     font-weight: 700;
     letter-spacing: 1.5px;
+    font-size: 24px;
+    margin: 0;
+    color: #f0f0f0;
 }
 
-nav {
-    margin-top: 15px;
+.user-nav {
     display: flex;
-    justify-content: center;
-    gap: 20px;
+    gap: 15px;
+    align-items: center;
 }
 
-nav a, nav button {
-    color: white;
+.user-nav a, .user-nav button {
+    color: #f0f0f0;
     text-decoration: none;
-    padding: 8px 15px;
+    padding: 8px 12px;
     border-radius: 5px;
     transition: all 0.3s ease;
     font-weight: 400;
     background-color: transparent;
-    border: 1px solid transparent;
+    border: 1px solid #424242;
     cursor: pointer;
+    font-size: 14px;
 }
 
-nav a:hover, nav button:hover {
+.user-nav a:hover, .user-nav button:hover {
     color: #e53935;
     background-color: rgba(229, 57, 53, 0.1);
     border-color: #e53935;
 }
 
-main {
-    padding: 30px 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+.category-nav {
+    display: flex;
+    justify-content: center;
+    padding: 10px 20px;
+    gap: 25px;
+    border-bottom: 3px solid #e53935;
+    overflow-x: auto; /* Allow horizontal scrolling on small screens */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
+
+.category-nav::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for a cleaner look */
+}
+
+.category-link {
+    color: #f0f0f0;
+    text-decoration: none;
+    padding: 8px 0;
+    transition: color 0.3s ease, border-bottom-color 0.3s ease;
+    white-space: nowrap; /* Prevent wrapping */
+    font-weight: 500;
+    position: relative;
+}
+
+.category-link:hover {
+    color: #e53935;
+}
+
+.category-link.active {
+    color: #e53935;
+    border-bottom: 2px solid #e53935;
+    font-weight: 700;
+}
+
+/* Adjust main content padding to account for sticky header height */
+main {
+    padding-top: 150px; /* Approximate height of the new sticky header */
+    padding-bottom: 30px;
+}
+
 
 /* Common form styling */
 h1, h2 {
