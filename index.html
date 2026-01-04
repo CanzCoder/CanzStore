@@ -8,13 +8,23 @@
 </head>
 <body>
     <header>
-        <h1>Canz Store</h1>
-        <nav>
+        <div class="top-bar">
             <a href="#" id="back-button" class="back-arrow-button">&#8592;</a>
-            <a href="login.html" id="login-link">Login</a>
-            <a href="register.html" id="register-link">Register</a>
-            <button id="admin-button" class="admin-button" onclick="window.location.href='admin.html'">Admin Panel</button>
-            <button id="logout-button" style="display: none;">Logout</button>
+            <h1 class="store-title">Canz Store</h1>
+            <div class="user-nav">
+                <a href="login.html" id="login-link">Login</a>
+                <a href="register.html" id="register-link">Register</a>
+                <button id="admin-button" class="admin-button" onclick="window.location.href='admin.html'">Admin</button>
+                <button id="logout-button" style="display: none;">Logout</button>
+            </div>
+        </div>
+        <nav class="category-nav">
+            <a href="#" class="category-link active" data-category="all">Semua</a>
+            <a href="#" class="category-link" data-category="App">App</a>
+            <a href="#" class="category-link" data-category="Game">Game</a>
+            <a href="#" class="category-link" data-category="Streaming">Streaming</a>
+            <a href="#" class="category-link" data-category="Voucher">Voucher</a>
+            <a href="#" class="category-link" data-category="Joki">Joki</a>
         </nav>
     </header>
     <main>
