@@ -32,6 +32,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchProducts);
+    }
 });
 
 /* =========================
@@ -139,18 +144,20 @@ document.getElementById('register-form')?.addEventListener('submit', function (e
 });
 
 /* =========================
-   LOAD PRODUCTS
+   PRODUCT RENDERING
 ========================= */
-function loadProducts() {
-    const products = JSON.parse(localStorage.getItem('products')) || [];
+function renderProducts(productsToRender) {
     const productList = document.getElementById('product-list');
-    const adminProductList = document.getElementById('admin-product-list');
+    if (!productList) return;
 
-    if (productList) productList.innerHTML = '';
-    if (adminProductList) adminProductList.innerHTML = '';
+    productList.innerHTML = ''; // Clear the list
 
-    products.forEach(product => {
-        // Determine if the product is in stock
+    if (productsToRender.length === 0) {
+        productList.innerHTML = '<p style="text-align: center; width: 100%;">Produk tidak ditemukan.</p>';
+        return;
+    }
+
+    productsToRender.forEach(product => {
         let isInStock = false;
         if (typeof product.stok === 'number') {
             isInStock = product.stok > 0;
@@ -159,23 +166,61 @@ function loadProducts() {
             isInStock = !(lowerCaseStock === 'habis' || lowerCaseStock === 'out of stock' || lowerCaseStock === '0');
         }
 
-        if (productList) {
-            productList.innerHTML += `
-                <div class="product-card">
-                    <img src="${product.gambar}" alt="${product.nama}">
-                    <h3>${product.nama}</h3>
-                    <p>${product.deskripsi}</p>
-                    <p>Harga: Rp${product.harga}</p>
-                    ${
-                        isInStock
-                            ? `<button onclick="redirectToWhatsApp('${product.nama}', '${product.harga}')">Beli</button>`
-                            : `<span class="stok-habis">Stok Habis</span>`
-                    }
-                </div>
-            `;
-        }
+        productList.innerHTML += `
+            <div class="product-card">
+                <img src="${product.gambar}" alt="${product.nama}">
+                <h3>${product.nama}</h3>
+                <p>${product.deskripsi}</p>
+                <p>Harga: Rp${product.harga}</p>
+                ${
+                    isInStock
+                        ? `<button onclick="redirectToWhatsApp('${product.nama}', '${product.harga}')">Beli</button>`
+                        : `<span class="stok-habis">Stok Habis</span>`
+                }
+            </div>
+        `;
+    });
+}
 
-        if (adminProductList) {
+/* =========================
+   SEARCH PRODUCTS
+========================= */
+function searchProducts() {
+    const searchTerm = document.getElementById('search').value.toLowerCase();
+    const allProducts = JSON.parse(localStorage.getItem('products')) || [];
+    
+    const filteredProducts = allProducts.filter(product => {
+        const productName = product.nama ? product.nama.toLowerCase() : '';
+        const productDesc = product.deskripsi ? product.deskripsi.toLowerCase() : '';
+        return productName.includes(searchTerm) || productDesc.includes(searchTerm);
+    });
+
+    renderProducts(filteredProducts);
+}
+
+
+/* =========================
+   LOAD PRODUCTS
+========================= */
+function loadProducts() {
+    const products = JSON.parse(localStorage.getItem('products')) || [];
+    
+    // For index.html
+    renderProducts(products);
+
+    // For admin.html
+    const adminProductList = document.getElementById('admin-product-list');
+    if (adminProductList) {
+        adminProductList.innerHTML = '';
+        products.forEach(product => {
+            let isInStock = false;
+            if (typeof product.stok === 'number') {
+                isInStock = product.stok > 0;
+            } else if (typeof product.stok === 'string') {
+                const lowerCaseStock = product.stok.toLowerCase();
+                isInStock = !(lowerCaseStock === 'habis' || lowerCaseStock === 'out of stock' || lowerCaseStock === '0');
+            }
+
             adminProductList.innerHTML += `
                 <div class="product-card">
                     <h3>${product.nama}</h3>
@@ -187,8 +232,8 @@ function loadProducts() {
                     </button>
                 </div>
             `;
-        }
-    });
+        });
+    }
 }
 
 /* =========================
@@ -276,9 +321,7 @@ function toggleStockStatus(id) {
    WHATSAPP REDIRECT
 ========================= */
 function redirectToWhatsApp(nama, harga) {
-    const adminContact = localStorage.getItem('adminContact') || '6281374770065';
+    const adminContact = localStorage.getItem('adminContact') || '6287743601940';
     const message = `Halo Admin, saya ingin memesan produk ${nama} dengan harga Rp${harga}`;
     window.open(`https://wa.me/${adminContact}?text=${encodeURIComponent(message)}`);
 }
-
-
