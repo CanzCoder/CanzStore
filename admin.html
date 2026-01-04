@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <a href="index.html" class="back-arrow-button">&#8592;</a>
+    <h1>Admin Panel</h1>
+    <div>
+        <h2>Tambah Produk</h2>
+        <input type="text" id="product-name" placeholder="Nama Produk">
+        <input type="file" id="product-image" accept="image/*">
+        <input type="text" id="product-price" placeholder="Harga">
+        <input type="text" id="product-description" placeholder="Deskripsi">
+        <input type="number" id="product-stock" placeholder="Stok">
+        <button id="add-product-button">Tambah Produk</button>
+    </div>
+
+    <h2>Daftar Produk</h2>
+    <div id="admin-product-list"></div>
+    <script src="script.js"></script>
+</body>
+</html>
