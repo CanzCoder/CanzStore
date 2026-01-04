@@ -1,7 +1,9 @@
+let currentCategory = 'all'; // Global variable to keep track of the active category
+
 document.addEventListener("DOMContentLoaded", () => {
     initDefaultAdmin();
     checkUserRole();
-    loadProducts();
+    loadProducts(); // This will now call filterAndRenderProducts internally
 
     const logoutButton = document.getElementById('logout-button');
     if(logoutButton) {
@@ -35,8 +37,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const searchInput = document.getElementById('search');
     if (searchInput) {
-        searchInput.addEventListener('input', searchProducts);
+        searchInput.addEventListener('input', filterAndRenderProducts); // Use filterAndRenderProducts here
     }
+
+    // Category navigation event listeners
+    document.querySelectorAll('.category-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Remove active class from all category links
+            document.querySelectorAll('.category-link').forEach(l => l.classList.remove('active'));
+            // Add active class to the clicked link
+            link.classList.add('active');
+            // Update currentCategory and filter products
+            currentCategory = link.dataset.category;
+            filterAndRenderProducts();
+        });
+    });
 });
 
 /* =========================
@@ -183,12 +199,18 @@ function renderProducts(productsToRender) {
 }
 
 /* =========================
-   SEARCH PRODUCTS
+   FILTER AND RENDER PRODUCTS (Centralized)
 ========================= */
-function searchProducts() {
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    const allProducts = JSON.parse(localStorage.getItem('products')) || [];
-    
+function filterAndRenderProducts() {
+    const searchTerm = document.getElementById('search')?.value.toLowerCase() || '';
+    let allProducts = JSON.parse(localStorage.getItem('products')) || [];
+
+    // Filter by category
+    if (currentCategory !== 'all') {
+        allProducts = allProducts.filter(product => product.kategori === currentCategory);
+    }
+
+    // Filter by search term
     const filteredProducts = allProducts.filter(product => {
         const productName = product.nama ? product.nama.toLowerCase() : '';
         const productDesc = product.deskripsi ? product.deskripsi.toLowerCase() : '';
@@ -198,16 +220,12 @@ function searchProducts() {
     renderProducts(filteredProducts);
 }
 
-
 /* =========================
-   LOAD PRODUCTS
+   LOAD PRODUCTS (Initial Admin Display)
 ========================= */
 function loadProducts() {
     const products = JSON.parse(localStorage.getItem('products')) || [];
     
-    // For index.html
-    renderProducts(products);
-
     // For admin.html
     const adminProductList = document.getElementById('admin-product-list');
     if (adminProductList) {
@@ -224,6 +242,7 @@ function loadProducts() {
             adminProductList.innerHTML += `
                 <div class="product-card">
                     <h3>${product.nama}</h3>
+                    <p>Kategori: ${product.kategori || 'Tidak ada'}</p>
                     <p>Harga: Rp${product.harga}</p>
                     <p>Stok: ${product.stok}</p>
                     <button onclick="deleteProduct(${product.id})">Hapus</button>
@@ -234,6 +253,9 @@ function loadProducts() {
             `;
         });
     }
+
+    // Initial render for index.html via centralized function
+    filterAndRenderProducts();
 }
 
 /* =========================
@@ -244,10 +266,11 @@ document.getElementById('add-product-button')?.addEventListener('click', () => {
     const imageInput = document.getElementById('product-image');
     const price = document.getElementById('product-price').value;
     const description = document.getElementById('product-description').value;
+    const category = document.getElementById('product-category').value;
     const stock = parseInt(document.getElementById('product-stock').value);
 
-    if (!name || !imageInput.files[0] || !price || !description || isNaN(stock)) {
-        alert("Semua field harus diisi!");
+    if (!name || !imageInput.files[0] || !price || !description || !category || isNaN(stock)) {
+        alert("Semua field harus diisi, termasuk kategori!");
         return;
     }
 
@@ -265,6 +288,7 @@ document.getElementById('add-product-button')?.addEventListener('click', () => {
             gambar: imageDataUrl,
             harga: price,
             deskripsi: description,
+            kategori: category,
             stok: stock
         };
 
@@ -277,6 +301,7 @@ document.getElementById('add-product-button')?.addEventListener('click', () => {
         imageInput.value = ''; // Clear file input
         document.getElementById('product-price').value = '';
         document.getElementById('product-description').value = '';
+        document.getElementById('product-category').value = '';
         document.getElementById('product-stock').value = '';
     };
 
